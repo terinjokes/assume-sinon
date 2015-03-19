@@ -1,0 +1,32 @@
+{
+  "name": "assume-sinon",
+  "version": "1.0.0",
+  "description": "Extends assume with assertions for the Sinon.JS mocking framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/terinjokes/assume-sinon"
+  },
+  "keywords": [
+    "sinon",
+    "assume",
+    "testing",
+    "spies",
+    "stubs",
+    "mocks"
+  ],
+  "author": "Terin Stock <terinjokes@gmail.com> (https://terinstock.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/terinjokes/assume-sinon/issues"
+  },
+  "homepage": "https://github.com/terinjokes/assume-sinon",
+  "devDependencies": {
+    "assume": "^1.0.0",
+    "mocha": "^2.1.0",
+    "sinon": "^1.12.2"
+  }
+}
