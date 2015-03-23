@@ -4,7 +4,10 @@
   "description": "Extends assume with assertions for the Sinon.JS mocking framework",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha $(find test -name '*.test.js')",
+    "watch": "mocha --watch $(find test -name '*.test.js')",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha -- $(find test -name '*.test.js')",
+    "test-travis": "istanbul cover node_modules/.bin/_mocha --report lcovonly -- $(find test -name '*.test.js')"
   },
   "repository": {
     "type": "git",
@@ -25,8 +28,10 @@
   },
   "homepage": "https://github.com/terinjokes/assume-sinon",
   "devDependencies": {
-    "assume": "^1.0.0",
-    "mocha": "^2.1.0",
-    "sinon": "^1.12.2"
+    "assume": "1.1.x",
+    "istanbul": "0.3.x",
+    "mocha": "2.1.x",
+    "sinon": "1.12.x",
+    "pre-commit": "1.0.x"
   }
 }
