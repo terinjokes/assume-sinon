@@ -1,6 +1,6 @@
 {
   "name": "assume-sinon",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Extends assume with assertions for the Sinon.JS mocking framework",
   "main": "index.js",
   "scripts": {
