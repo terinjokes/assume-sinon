@@ -37,16 +37,35 @@ module.exports = function(assume, util) {
     return (count || 0) + 'times';
   }
 
+  function toArray(of) {
+    var type = util.type(of);
+
+    if (type === 'string' || type === 'number') {
+      return [of]
+    }
+
+    if (type === 'domtokenlist') {
+      return String.prototype.split.call(of, /\s/);
+    }
+
+    if (Object(of) === of && typeof of.length === 'number') {
+      return of.toArray ? of.toArray() : [].slice.call(of);
+    }
+
+    return [];
+  }
+
   assume.add('spylike', function(msg) {
     var value = this.value;
     var name = maybeSpyName(value);
 
-    var expect = '`' + name + '` to @ be a Sinon.JS spy';
+    var expect = util.format('`%s` to @ be a Sinon.JS spy', name);
 
     this.test(isSpylike(value), msg, expect);
   });
 
   assume.add('called', function(count, msg) {
+    var expect;
     if (util.type(count) === 'string') {
       msg = count;
       count = null;
@@ -56,14 +75,14 @@ module.exports = function(assume, util) {
       slice: this.sliceStack + 1
     }).to.be.spylike();
 
-    var expect = 'spy to @ be called ';
-
     if (count) {
-      expect += timesInWords(count) + ', called ' + timesInWords(this.value.callCount);
+      expect = util.format('spy to @ be called %s, called %s', timesInWords(count), timesInWords(this.value.callCount));
       return this.test(this.value.callCount === count, msg, expect);
     }
 
-    return this.test(this.value.called, msg, expect + 'at least once');
+    expect = util.format('spy to @ be called at least once');
+
+    return this.test(this.value.called, msg, expect);
   });
 
   assume.add('calledWithNew', function(msg) {
@@ -72,7 +91,7 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledWithNew';
-    var expect = 'spy to @ been called with new';
+    var expect = util.format('spy to @ been called with new');
 
     if (this.consistently) {
       methodName = 'alwaysCalledWithNew';
@@ -87,7 +106,7 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledBefore';
-    var expect = 'spy to @ been called before ' + maybeSpyName(spy2);
+    var expect = util.format('spy to @ been called before %s', maybeSpyName(spy2));
 
     if (this.consistently) {
       methodName = 'alwaysCalledBefore';
@@ -102,7 +121,7 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledAfter';
-    var expect = 'spy to @ been called after ' + maybeSpyName(spy2);
+    var expect = util.format('spy to @ been called after %s', maybeSpyName(spy2));
 
     if (this.consistently) {
       methodName = 'alwaysCalledAfter';
@@ -117,7 +136,7 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledOn';
-    var expect = 'spy to @ been called with ' + util.string(obj) + ' as this';
+    var expect = util.format('spy to @ been called with %s as this', util.string(obj));
 
     if (this.consistently) {
       methodName = 'alwaysCalledOn';
@@ -133,13 +152,13 @@ module.exports = function(assume, util) {
 
     var methodName = 'calledWith';
 
-    var expect = 'spy to @ been called with arguments ' + util.string(args) + ', called with ' + util.string(this.value.args);
+    var expect = util.format('spy to @ been called with arguments %s, called with %s', util.string(args), util.string(this.value.args));
 
     if (this.consistently) {
       methodName = 'alwaysCalledWith';
     }
 
-    this.test(this.value[methodName].call(this.value, args), msg, expect);
+    return this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
   assume.add('calledWithMatch', function(args, msg) {
@@ -148,14 +167,14 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledWithMatch';
-
-    var expect = 'spy to @ been called with arguments matching ' + util.string(args) + ', called with ' + util.string(this.value.args);
+    var args = toArray(args);
+    var expect = util.format('spy to @ been called with arguments matching %s, called with %s', util.string(args), util.string(this.value.args));
 
     if (this.consistently) {
-      methodName = 'alwaysCalledWithMath';
+      methodName = 'alwaysCalledWithMatch';
     }
 
-    this.test(this.value[methodName].call(this.value, args), msg, expect);
+    this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
   assume.add('calledWithExactly', function(args, msg) {
@@ -164,14 +183,14 @@ module.exports = function(assume, util) {
     }).to.be.spylike();
 
     var methodName = 'calledWithExactly';
-
-    var expect = 'spy to @ been called with exact arguments ' + util.string(args) + ', called with ' + util.string(this.value.args);
+    var args = toArray(args);
+    var expect = util.format('spy to @ been called with exact arguments %s, called with %s', util.string(args), util.string(this.value.args));
 
     if (this.consistently) {
       methodName = 'alwaysCalledWithExactly';
     }
 
-    this.test(this.value[methodName].call(this.value, args), msg, expect);
+    this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
   assume.add('returned', function(returnee, msg) {
@@ -181,7 +200,7 @@ module.exports = function(assume, util) {
 
     var methodName = 'returned';
 
-    var expect = 'spy to have @ retured ' + util.string(returnee) + ', returns ' + util.string(this.value.returnValues);
+    var expect = util.format('spy to have @ retured %s, returns %s', util.string(returnee), util.string(this.value.returnValues));
 
     if (this.consistently) {
       methodName = 'alwaysReturned';
@@ -192,6 +211,7 @@ module.exports = function(assume, util) {
 
 
   assume.add('thrown', function(err, msg) {
+    var expect;
     if (!msg && util.type(err) === 'string') {
       msg = err;
       err = null;
@@ -207,16 +227,16 @@ module.exports = function(assume, util) {
 
     var methodName = 'threw';
 
-    var expect = 'spy to have @ threw ';
-
     if (this.consistently) {
       methodName = 'alwaysThrew';
     }
 
     if (err) {
-      expect += util.string(err) + ', thrown ' + util.string(this.value.exceptions);
+      expect = util.format('spy to have @ threw %s, thrown %s', util.string(err), util.string(this.value.exceptions));
       return this.test(this.value[methodName](err), msg, expect);
     }
+
+    expect = util.format('spy to have @ threw');
 
     this.test(this.value[methodName](), msg, expect);
   });
