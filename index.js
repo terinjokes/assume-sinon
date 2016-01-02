@@ -1,12 +1,12 @@
 'use strict';
 
-module.exports = function(assume, util) {
+module.exports = function (assume, util) {
   assume.flags.consistently = 'always';
 
   function isSpy(maybeSpy) {
-    return util.type(maybeSpy) === 'function'
-      && util.type(maybeSpy.getCall) === 'function'
-      && util.type(maybeSpy.calledWithExactly) === 'function';
+    return util.type(maybeSpy) === 'function' &&
+      util.type(maybeSpy.getCall) === 'function' &&
+      util.type(maybeSpy.calledWithExactly) === 'function';
   }
 
   function isSpylike(maybeSpylike) {
@@ -16,9 +16,9 @@ module.exports = function(assume, util) {
   function maybeSpyName(maybeSpy) {
     if (util.type(maybeSpy) === 'function') {
       return util.name(maybeSpy);
-    } else {
-      return util.string(maybeSpy);
     }
+
+    return util.string(maybeSpy);
   }
 
   function timesInWords(count) {
@@ -41,7 +41,7 @@ module.exports = function(assume, util) {
     var type = util.type(of);
 
     if (type === 'string' || type === 'number') {
-      return [of]
+      return [of];
     }
 
     if (type === 'domtokenlist') {
@@ -55,7 +55,7 @@ module.exports = function(assume, util) {
     return [];
   }
 
-  assume.add('spylike', function(msg) {
+  assume.add('spylike', function (msg) {
     var value = this.value;
     var name = maybeSpyName(value);
 
@@ -64,7 +64,7 @@ module.exports = function(assume, util) {
     this.test(isSpylike(value), msg, expect);
   });
 
-  assume.add('called', function(count, msg) {
+  assume.add('called', function (count, msg) {
     var expect;
     if (util.type(count) === 'string') {
       msg = count;
@@ -85,7 +85,7 @@ module.exports = function(assume, util) {
     return this.test(this.value.called, msg, expect);
   });
 
-  assume.add('calledWithNew', function(msg) {
+  assume.add('calledWithNew', function (msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -100,7 +100,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName](), msg, expect);
   });
 
-  assume.add('calledBefore', function(spy2, msg) {
+  assume.add('calledBefore', function (spy2, msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -115,7 +115,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName](spy2), msg, expect);
   });
 
-  assume.add('calledAfter', function(spy2, msg) {
+  assume.add('calledAfter', function (spy2, msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -130,7 +130,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName](spy2), msg, expect);
   });
 
-  assume.add('calledOn', function(obj, msg) {
+  assume.add('calledOn', function (obj, msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -145,7 +145,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName](obj), msg, expect);
   });
 
-  assume.add('calledWith', function(args, msg) {
+  assume.add('calledWith', function (args, msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -161,13 +161,13 @@ module.exports = function(assume, util) {
     return this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
-  assume.add('calledWithMatch', function(args, msg) {
+  assume.add('calledWithMatch', function (args, msg) {
+    args = toArray(args);
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
 
     var methodName = 'calledWithMatch';
-    var args = toArray(args);
     var expect = util.format('spy to @ been called with arguments matching %s, called with %s', util.string(args), util.string(this.value.args));
 
     if (this.consistently) {
@@ -177,13 +177,13 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
-  assume.add('calledWithExactly', function(args, msg) {
+  assume.add('calledWithExactly', function (args, msg) {
+    args = toArray(args);
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
 
     var methodName = 'calledWithExactly';
-    var args = toArray(args);
     var expect = util.format('spy to @ been called with exact arguments %s, called with %s', util.string(args), util.string(this.value.args));
 
     if (this.consistently) {
@@ -193,7 +193,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName].apply(this.value, args), msg, expect);
   });
 
-  assume.add('returned', function(returnee, msg) {
+  assume.add('returned', function (returnee, msg) {
     assume(this.value, {
       slice: this.sliceStack + 1
     }).to.be.spylike();
@@ -209,8 +209,7 @@ module.exports = function(assume, util) {
     this.test(this.value[methodName](returnee), msg, expect);
   });
 
-
-  assume.add('thrown', function(err, msg) {
+  assume.add('thrown', function (err, msg) {
     var expect;
     if (!msg && util.type(err) === 'string') {
       msg = err;
