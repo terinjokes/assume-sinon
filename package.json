@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/terinjokes/assume-sinon",
   "devDependencies": {
-    "assume": "1.1.x",
+    "assume": "1.4.x",
     "istanbul": "0.3.x",
     "mocha": "2.1.x",
     "sinon": "1.12.x",
