@@ -72,12 +72,12 @@ Assert that the function called with the given arguments.
 assume(spy).is.calledWith('foo', 'bar');
 ```
 
-#### calledMatch
+#### calledWithMatch
 
 Assert that the function called with matching arguments.
 
 ```js
-assume(spy).is.calledMatch('foo', 'bar');
+assume(spy).is.calledWithMatch('foo', 'bar');
 ```
 
 #### calledWithExactly
