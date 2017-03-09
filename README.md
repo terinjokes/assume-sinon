@@ -1,5 +1,7 @@
 # assume-sinon
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/terinjokes/assume-sinon.svg)](https://greenkeeper.io/)
+
 [![Version npm][version]](http://browsenpm.org/package/assume-sinon)[![Build Status][build]](https://travis-ci.org/terinjokes/assume-sinon)[![Dependencies][david]](https://david-dm.org/terinjokes/assume-sinon)[![Coverage Status][cover]](https://coveralls.io/r/terinjokes/assume-sinon?branch=master)
 
 [version]: http://img.shields.io/npm/v/assume-sinon.svg?style=flat-square
