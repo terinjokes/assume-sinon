@@ -1,6 +1,10 @@
 'use strict';
 
 /**
+ * @typedef {import('assume')} Assume
+ * @typedef {import('sinon').SinonSpy} SinonSpy
+ */
+/**
  * Expose the Assume plugin interface
  *
  * @param {Assume} assume The Assume instance.
@@ -18,7 +22,7 @@ module.exports = function plugin(assume, util) {
   /**
    * Assert if the given function is a sinon spy.
    *
-   * @param {Function} maybeSpy Thing to inspect
+   * @param {SinonSpy} maybeSpy Thing to inspect
    * @returns {Boolean}
    * @private
    */
@@ -29,20 +33,24 @@ module.exports = function plugin(assume, util) {
   }
 
   /**
+   * @typedef {{ proxy: SinonSpy }} SpyProxy
+   */
+  /**
    * Assert if the given function might be a spy.
    *
-   * @param {Function} maybeSpylike Thing that probably is a spy.
+   * @param {SinonSpy|SpyProxy} maybeSpylike Thing that probably is a spy.
    * @returns {Boolean}
    * @private
    */
   function isSpylike(maybeSpylike) {
+    // @ts-expect-error
     return maybeSpylike && (isSpy((maybeSpylike)) || isSpy(maybeSpylike.proxy));
   }
 
   /**
    * Extract the name of the spy.
    *
-   * @param {Function} maybeSpy Possible sinon spy.
+   * @param {SinonSpy} maybeSpy Possible sinon spy.
    * @returns {String} Name of the function
    */
   function maybeSpyName(maybeSpy) {
@@ -75,268 +83,288 @@ module.exports = function plugin(assume, util) {
   }
 
   /**
-   * Assert if the value is spy.
-   *
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
+   * @typedef {import('assume').AddonAssumption<T>} AddonAssumption<T>
+   * @template T
    */
-  assume.add('spylike', function spylike(msg) {
-    var value = this.value;
-    var name = maybeSpyName(value);
 
-    var expect = format('`%s` to @ be a Sinon.JS spy', name);
+  assume.add('spylike',
+    /**
+     * Assert if the value is spy.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function spylike(msg) {
+      var value = this.value;
+      var name = maybeSpyName(value);
 
-    return this.test(isSpylike(value), msg, expect);
-  });
+      var expect = format('`%s` to @ be a Sinon.JS spy', name);
 
-  /**
-   * Assert that the function called x amount of times
-   *
-   * @param {Number} count Amount of calls expected.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('called', function called(count, msg) {
-    if (util.type(count) === 'string') {
-      msg = count;
-      count = null;
-    }
+      return this.test(isSpylike(value), msg, expect);
+    });
 
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+  assume.add('called',
+    /**
+     * Assert that the function called x amount of times
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {Number} [count] Amount of calls expected.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function called(count, msg) {
+      if (util.type(count) === 'string') {
+        // @ts-expect-error
+        msg = count;
+        count = null;
+      }
 
-    var expect = 'spy to @ be called ';
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (count) {
-      expect += timesInWords(count) + ', called ' + timesInWords(this.value.callCount);
-      return this.test(this.value.callCount === count, msg, format(expect));
-    }
+      var expect = 'spy to @ be called ';
 
-    return this.test(this.value.called, msg, format(expect + 'at least once') );
-  });
+      if (count) {
+        expect += timesInWords(count) + ', called ' + timesInWords(this.value.callCount);
+        return this.test(this.value.callCount === count, msg, format(expect));
+      }
 
-  /**
-   * Assert that the function called with `new`
-   *
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledWithNew', function calledWithNew(msg) {
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      return this.test(this.value.called, msg, format(expect + 'at least once') );
+    });
 
-    var methodName = 'calledWithNew';
-    var expect = 'spy to @ been called with new';
+  assume.add('calledWithNew',
+    /**
+     * Assert that the function called with `new`
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function calledWithNew(msg) {
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledWithNew';
-    }
+      var methodName = 'calledWithNew';
+      var expect = 'spy to @ been called with new';
 
-    return this.test(this.value[methodName](), msg, format(expect));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledWithNew';
+      }
 
-  /**
-   * Assert that the function called before a given sinon spy.
-   *
-   * @param {Spy} spy2 Function to be called before.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledBefore', function calledBefore(spy2, msg) {
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      return this.test(this.value[methodName](), msg, format(expect));
+    });
 
-    var methodName = 'calledBefore';
-    var expect = 'spy to @ been called before %s';
+  assume.add('calledBefore',
+    /**
+     * Assert that the function called before a given sinon spy.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {SinonSpy} spy2 Function to be called before.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function calledBefore(spy2, msg) {
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledBefore';
-    }
+      var methodName = 'calledBefore';
+      var expect = 'spy to @ been called before %s';
 
-    return this.test(this.value[methodName](spy2), msg, format(expect, maybeSpyName(spy2)));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledBefore';
+      }
 
-  /**
-   * Assert that the function called after a given sinon spy.
-   *
-   * @param {Spy} spy2 Function to be called before.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledAfter', function calledAfter(spy2, msg) {
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      return this.test(this.value[methodName](spy2), msg, format(expect, maybeSpyName(spy2)));
+    });
 
-    var methodName = 'calledAfter';
-    var expect = 'spy to @ been called after %s';
+  assume.add('calledAfter',
+    /**
+     * Assert that the function called after a given sinon spy.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {SinonSpy} spy2 Function to be called before.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function calledAfter(spy2, msg) {
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledAfter';
-    }
+      var methodName = 'calledAfter';
+      var expect = 'spy to @ been called after %s';
 
-    return this.test(this.value[methodName](spy2), msg, format(expect, maybeSpyName(spy2)));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledAfter';
+      }
 
-  /**
-   * Assert that the function called on a given object.
-   *
-   * @param {Object} obj Object to be called with.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledOn', function calledOn(obj, msg) {
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      return this.test(this.value[methodName](spy2), msg, format(expect, maybeSpyName(spy2)));
+    });
 
-    var methodName = 'calledOn';
-    var expect = 'spy to @ been called with %j as this';
+  assume.add('calledOn',
+    /**
+     * Assert that the function called on a given object.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {Object} obj Object to be called with.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function calledOn(obj, msg) {
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledOn';
-    }
+      var methodName = 'calledOn';
+      var expect = 'spy to @ been called with %j as this';
 
-    return this.test(this.value[methodName](obj), msg, format(expect, obj));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledOn';
+      }
 
-  /**
-   * Assert that the function called with the given arguments.
-   *
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledWith', function calledWith() {
-    var args = Array.prototype.slice.call(arguments);
+      return this.test(this.value[methodName](obj), msg, format(expect, obj));
+    });
 
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+  assume.add('calledWith',
+    /**
+     * Assert that the function called with the given arguments.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {...any} args
+     * @public
+     */
+    function calledWith() {
+      var args = Array.prototype.slice.call(arguments);
 
-    var methodName = 'calledWith';
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    var expect = 'spy to @ been called with arguments %j, called with %j';
+      var methodName = 'calledWith';
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledWith';
-    }
+      var expect = 'spy to @ been called with arguments %j, called with %j';
 
-    return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledWith';
+      }
 
-  /**
-   * Assert that the function called with matching arguments.
-   *
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledWithMatch', function calledWithMatch() {
-    var args = Array.prototype.slice.call(arguments);
+      return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
+    });
 
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+  assume.add('calledWithMatch',
+    /**
+     * Assert that the function called with matching arguments.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {...any} args
+     * @public
+     */
+    function calledWithMatch() {
+      var args = Array.prototype.slice.call(arguments);
 
-    var methodName = 'calledWithMatch';
-    var expect = 'spy to @ been called with arguments matching %j, called with %j';
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledWithMatch';
-    }
+      var methodName = 'calledWithMatch';
+      var expect = 'spy to @ been called with arguments matching %j, called with %j';
 
-    return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledWithMatch';
+      }
 
-  /**
-   * Assert that the function called with exactly matching arguments.
-   *
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('calledWithExactly', function calledWithExactly() {
-    var args = Array.prototype.slice.call(arguments);
+      return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
+    });
 
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+  assume.add('calledWithExactly',
+    /**
+     * Assert that the function called with exactly matching arguments.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {...any} args
+     * @public
+     */
+    function calledWithExactly() {
+      var args = Array.prototype.slice.call(arguments);
 
-    var methodName = 'calledWithExactly';
-    var expect = 'spy to @ been called with exact arguments %j, called with %j';
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysCalledWithExactly';
-    }
+      var methodName = 'calledWithExactly';
+      var expect = 'spy to @ been called with exact arguments %j, called with %j';
 
-    return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysCalledWithExactly';
+      }
 
-  /**
-   * Assert that the function has returned a given value.
-   *
-   * @param {Mixed} returnee Value that the function should return.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('returned', function returned(returnee, msg) {
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      return this.test(this.value[methodName].apply(this.value, args), null, format(expect, args, this.value.args));
+    });
 
-    var methodName = 'returned';
-    var expect = 'spy to have @ retured %j, returns %j';
+  assume.add('returned',
+    /**
+     * Assert that the function has returned a given value.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {any} returnee Value that the function should return.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function returned(returnee, msg) {
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    if (this.consistently) {
-      methodName = 'alwaysReturned';
-    }
+      var methodName = 'returned';
+      var expect = 'spy to have @ retured %j, returns %j';
 
-    return this.test(this.value[methodName](returnee), msg, format(expect, returnee, this.value.returnValues));
-  });
+      if (this.consistently) {
+        methodName = 'alwaysReturned';
+      }
+
+      return this.test(this.value[methodName](returnee), msg, format(expect, returnee, this.value.returnValues));
+    });
 
 
-  /**
-   * Assert that the function has thrown.
-   *
-   * @param {Object} err Object/string to throw.
-   * @param {String} msg Reason of assertion failure.
-   * @returns {Assume}
-   * @public
-   */
-  assume.add('thrown', function thrown(err, msg) {
-    if (!msg && util.type(err) === 'string') {
-      msg = err;
-      err = null;
-    }
+  assume.add('thrown',
+    /**
+     * Assert that the function has thrown.
+     *
+     * @type {AddonAssumption<SinonSpy>}
+     * @param {Object|String|Error} [err] Object/string to throw.
+     * @param {String} [msg] Reason of assertion failure.
+     * @public
+     */
+    function thrown(err, msg) {
+      if (!msg && util.type(err) === 'string') {
+        msg = err;
+        err = null;
+      }
 
-    if (util.type(err) === 'error') {
-      console.log('an error!');
-    }
+      if (util.type(err) === 'error') {
+        console.log('an error!');
+      }
 
-    assume(this.value, {
-      slice: this.sliceStack + 1
-    }).to.be.spylike();
+      assume(this.value, {
+        slice: this.sliceStack + 1
+      }).to.be.spylike();
 
-    var methodName = 'threw';
-    var expect = 'spy to have @ threw ';
+      var methodName = 'threw';
+      var expect = 'spy to have @ threw ';
 
-    if (this.consistently) {
-      methodName = 'alwaysThrew';
-    }
+      if (this.consistently) {
+        methodName = 'alwaysThrew';
+      }
 
-    if (err) {
-      expect += '%j, thrown %j';
-      return this.test(this.value[methodName](err), msg, expect);
-    }
+      if (err) {
+        expect += '%j, thrown %j';
+        return this.test(this.value[methodName](err), msg, expect);
+      }
 
-    return this.test(this.value[methodName](), msg, format(expect, err, this.value.exceptions));
-  });
+      return this.test(this.value[methodName](), msg, format(expect, err, this.value.exceptions));
+    });
 };
